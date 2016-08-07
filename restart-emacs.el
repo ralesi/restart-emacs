@@ -77,6 +77,7 @@ FORMAT and ARGS correspond to STRING and OBJECTS arguments to `format'."
                                         frameset-filter-alist)))
     (desktop-save temporary-file-directory t t)
     `(progn
+       (require 'desktop)
        (defun restart-emacs--notify-user (tty)
          (with-temp-file tty
            (let* ((server-dir (if server-use-tcp server-auth-dir server-socket-dir))
@@ -108,7 +109,6 @@ FORMAT and ARGS correspond to STRING and OBJECTS arguments to `format'."
                ;; daemon
                (fset 'display-color-p (lambda (&rest ignored)
                                         ,(display-color-p)))
-               (require 'desktop)
                (desktop-read ,desktop-dirname)
                (desktop-release-lock ,desktop-dirname))
            ;; Restore display-color-p's definition
