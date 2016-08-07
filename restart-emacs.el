@@ -86,6 +86,7 @@ FORMAT and ARGS correspond to STRING and OBJECTS arguments to `format'."
   (expand-file-name invocation-name invocation-directory))
 
 (defun restart-emacs--frame-restorer-using-desktop ()
+  "Return sexp that needs to executed on Emacs restart to restore frames using desktop."
   (let* (desktop-file-modtime
          (desktop-base-file-name (make-temp-name "restart-emacs-desktop"))
          (desktop-dirname temporary-file-directory)
@@ -137,12 +138,11 @@ FORMAT and ARGS correspond to STRING and OBJECTS arguments to `format'."
              (delete-file (desktop-full-lock-name))))))))
 
 (defun restart-emacs--add-frame-restorer (&optional args)
+  "Add arguments needed to restore Emacs frames after restart to ARGS."
   (if (daemonp)
       (let ((config-file (make-temp-file "restart-emacs-desktop-config")))
         (with-temp-file config-file
-          (insert (prin1-to-string (if (locate-library "frameset")
-                                       (restart-emacs--frame-restorer-using-desktop)
-                                     '(shell-command-to-string "notify-send 'restart-emacs' 'Use persp'")))))
+          (insert (prin1-to-string (restart-emacs--frame-restorer-using-desktop))))
         (append args (list "--load" config-file)))
     args))
 
@@ -181,10 +181,6 @@ sh, bash, zsh, fish, csh and tcsh shells"
 
 This function arranges for Emacs frames to be restored and makes sure the
 new Emacs instance uses the same server-name as the current instance"
-  ;; TODO: Do not save desktop if the user config is already doing so
-  (shell-command-to-string (format "notify-send 'args: %s'" (prin1-to-string args)))
-  (with-temp-file "/tmp/v"
-    (insert (prin1-to-string args)))
   (call-process "sh" nil
                 0 nil
                 "-c" (format "%s --daemon=%s %s &"
@@ -237,9 +233,6 @@ It does the following translation
         ((equal prefix '(16)) '("-Q"))
         ((equal prefix '(64)) (split-string (read-string "Arguments to start Emacs with (separated by space): ")
                                             " "))))
-
-(defun restart-emacs--tty-terminal-p (terminal)
-  (assoc 'terminal-initted (terminal-parameters terminal)))
 
 
 
